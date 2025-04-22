@@ -1,12 +1,14 @@
 use crate::auth::AuthManager;
 use crate::error::{WebullError, WebullResult};
 use crate::models::response::ApiResponse;
+use crate::utils::cache::CacheManager;
 use crate::utils::rate_limit::RateLimiter;
 use reqwest::{Client, Method, RequestBuilder, StatusCode};
 use reqwest::header::AUTHORIZATION;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::sync::Arc;
+use std::time::Duration;
 use url::Url;
 
 /// Base endpoint for API requests.
@@ -22,6 +24,9 @@ pub struct BaseEndpoint {
 
     /// Rate limiter
     rate_limiter: Arc<RateLimiter>,
+
+    /// Cache manager
+    cache_manager: Arc<CacheManager>,
 }
 
 impl BaseEndpoint {
@@ -32,6 +37,7 @@ impl BaseEndpoint {
             base_url,
             auth_manager,
             rate_limiter: Arc::new(RateLimiter::new(60)), // Default to 60 requests per minute
+            cache_manager: Arc::new(CacheManager::new()),
         }
     }
 
@@ -143,42 +149,101 @@ impl BaseEndpoint {
     /// Send a GET request to the API.
     pub async fn get<T>(&self, path: &str) -> WebullResult<T>
     where
-        T: DeserializeOwned + Clone,
+        T: DeserializeOwned + Clone + Send + Sync + 'static,
     {
+        // Check if we have a cached response
+        let cache = self.cache_manager.get_cache::<T>("get");
+        if let Some(cached) = cache.get("GET", path, None, None) {
+            return Ok(cached);
+        }
+
+        // Send the request
         let request = self.request::<T>(Method::GET, path);
         let request = self.authenticate_request(request).await?;
-        self.send_request(request).await
+        let response: T = self.send_request(request).await?;
+
+        // Cache the response
+        cache.set("GET", path, None, None, response.clone(), Some(Duration::from_secs(60)));
+
+        Ok(response)
     }
 
     /// Send a POST request to the API.
     pub async fn post<T, B>(&self, path: &str, body: &B) -> WebullResult<T>
     where
-        T: DeserializeOwned + Clone,
+        T: DeserializeOwned + Clone + Send + Sync + 'static,
         B: Serialize,
     {
+        // For POST requests, we only cache if the body is cacheable
+        // For simplicity, we'll just serialize the body and use it as part of the cache key
+        let body_str = match serde_json::to_string(body) {
+            Ok(s) => Some(s),
+            Err(_) => None,
+        };
+
+        // Check if we have a cached response
+        if let Some(body_str) = &body_str {
+            let cache = self.cache_manager.get_cache::<T>("post");
+            if let Some(cached) = cache.get("POST", path, None, Some(body_str)) {
+                return Ok(cached);
+            }
+        }
+
+        // Send the request
         let request = self.request::<T>(Method::POST, path).json(body);
         let request = self.authenticate_request(request).await?;
-        self.send_request(request).await
+        let response: T = self.send_request(request).await?;
+
+        // Cache the response if the body is cacheable
+        if let Some(body_str) = body_str {
+            let cache = self.cache_manager.get_cache::<T>("post");
+            cache.set("POST", path, None, Some(&body_str), response.clone(), Some(Duration::from_secs(60)));
+        }
+
+        Ok(response)
     }
 
     /// Send a PUT request to the API.
     pub async fn put<T, B>(&self, path: &str, body: &B) -> WebullResult<T>
     where
-        T: DeserializeOwned + Clone,
+        T: DeserializeOwned + Clone + Send + Sync + 'static,
         B: Serialize,
     {
+        // For PUT requests, we don't cache the response, but we invalidate any cached GET responses
+        // for the same path
+
+        // Send the request
         let request = self.request::<T>(Method::PUT, path).json(body);
         let request = self.authenticate_request(request).await?;
-        self.send_request(request).await
+        let response: T = self.send_request(request).await?;
+
+        // Invalidate any cached GET responses for this path
+        let get_cache = self.cache_manager.get_cache::<T>("get");
+        get_cache.clear();
+
+        Ok(response)
     }
 
     /// Send a DELETE request to the API.
     pub async fn delete<T>(&self, path: &str) -> WebullResult<T>
     where
-        T: DeserializeOwned + Clone,
+        T: DeserializeOwned + Clone + Send + Sync + 'static,
     {
+        // For DELETE requests, we don't cache the response, but we invalidate any cached responses
+        // for the same path
+
+        // Send the request
         let request = self.request::<T>(Method::DELETE, path);
         let request = self.authenticate_request(request).await?;
-        self.send_request(request).await
+        let response: T = self.send_request(request).await?;
+
+        // Invalidate any cached responses for this path
+        let get_cache = self.cache_manager.get_cache::<T>("get");
+        get_cache.clear();
+
+        let post_cache = self.cache_manager.get_cache::<T>("post");
+        post_cache.clear();
+
+        Ok(response)
     }
 }

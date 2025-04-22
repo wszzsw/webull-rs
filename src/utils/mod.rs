@@ -1,4 +1,6 @@
 // Re-export utility modules
+pub mod cache;
+pub mod credentials;
 pub mod crypto;
 pub mod rate_limit;
 pub mod serialization;

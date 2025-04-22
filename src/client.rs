@@ -3,6 +3,7 @@ use crate::config::WebullConfig;
 use crate::endpoints::{account::AccountEndpoints, market_data::MarketDataEndpoints, orders::OrderEndpoints, watchlists::WatchlistEndpoints};
 use crate::error::{WebullError, WebullResult};
 use crate::streaming::client::WebSocketClient;
+use crate::utils::credentials::{CredentialStore, MemoryCredentialStore};
 use std::sync::Arc;
 use std::time::Duration;
 use uuid::Uuid;
@@ -16,6 +17,7 @@ pub struct WebullClientBuilder {
     base_url: String,
     paper_trading: bool,
     token_store: Option<Box<dyn TokenStore>>,
+    credential_store: Option<Box<dyn CredentialStore>>,
 }
 
 impl WebullClientBuilder {
@@ -29,6 +31,7 @@ impl WebullClientBuilder {
             base_url: "https://api.webull.com".to_string(),
             paper_trading: false,
             token_store: None,
+            credential_store: None,
         }
     }
 
@@ -74,6 +77,12 @@ impl WebullClientBuilder {
         self
     }
 
+    /// Set a custom credential store.
+    pub fn with_credential_store(mut self, store: impl CredentialStore + 'static) -> Self {
+        self.credential_store = Some(Box::new(store));
+        self
+    }
+
     /// Build the WebullClient.
     pub fn build(self) -> WebullResult<WebullClient> {
         // Generate a random device ID if not provided
@@ -98,6 +107,9 @@ impl WebullClientBuilder {
         // Create the token store
         let token_store = self.token_store.unwrap_or_else(|| Box::new(MemoryTokenStore::default()));
 
+        // Create the credential store
+        let credential_store = self.credential_store.unwrap_or_else(|| Box::new(MemoryCredentialStore::default()));
+
         // Create the auth manager
         let auth_manager = Arc::new(AuthManager::new(config.clone(), token_store, client.clone()));
 
@@ -105,6 +117,7 @@ impl WebullClientBuilder {
             inner: client,
             config,
             auth_manager,
+            credential_store: Arc::new(credential_store),
         })
     }
 }
@@ -119,6 +132,9 @@ pub struct WebullClient {
 
     /// Authentication manager
     auth_manager: Arc<AuthManager>,
+
+    /// Credential store
+    credential_store: Arc<Box<dyn CredentialStore>>,
 }
 
 impl WebullClient {
@@ -142,6 +158,13 @@ impl WebullClient {
         // Store the token in the original auth_manager
         let token_store = self.auth_manager.token_store.as_ref();
         token_store.store_token(token)?;
+
+        // Store the credentials
+        let credentials = crate::auth::Credentials {
+            username: username.to_string(),
+            password: password.to_string(),
+        };
+        self.credential_store.store_credentials(credentials)?;
 
         Ok(())
     }
@@ -172,6 +195,9 @@ impl WebullClient {
 
         // Clear the token in the original auth_manager
         self.auth_manager.token_store.clear_token()?;
+
+        // Clear the credentials
+        self.credential_store.clear_credentials()?;
 
         Ok(())
     }
@@ -245,5 +271,15 @@ impl WebullClient {
     pub fn streaming(&self) -> WebSocketClient {
         let ws_base_url = self.config.base_url.clone().replace("http", "ws");
         WebSocketClient::new(ws_base_url, self.auth_manager.clone())
+    }
+
+    /// Get the stored credentials.
+    pub fn get_credentials(&self) -> WebullResult<Option<crate::auth::Credentials>> {
+        self.credential_store.get_credentials()
+    }
+
+    /// Get the credential store.
+    pub fn credential_store(&self) -> &Arc<Box<dyn CredentialStore>> {
+        &self.credential_store
     }
 }
