@@ -3,11 +3,16 @@ name = "webull-rs"
 version = "0.1.0"
 edition = "2021"
 description = "A Rust client for the Webull trading API"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Chairon <wszzsw@nullified.xyz>"]
 license = "MIT"
-repository = "https://github.com/yourusername/webull-rs"
+repository = "https://github.com/wszzsw/webull-rs"
 keywords = ["webull", "trading", "finance", "api", "stocks"]
 categories = ["api-bindings", "finance"]
+exclude = [
+    ".augment-guidelines",
+    "tasks.md",
+    "pdd.md"
+]
 
 [dependencies]
 reqwest = { version = "0.11", features = ["json"], default-features = false }
