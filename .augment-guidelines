@@ -1,0 +1,82 @@
+Mark any task completed as done in the task list.
+Don't remove anything from the task list.
+Don't stray away from the PDD and Task List.
+
+Crate Architecture
+
+Implement the modular structure outlined in the PDD with clear separation of concerns
+Follow the specified directory layout, organizing code into lib.rs, auth.rs, client.rs, etc.
+Create distinct modules for models, endpoints, and utilities as specified
+
+Client Implementation
+
+Use the builder pattern for WebullClient configuration as detailed in section 3.1
+Implement the core WebullClient class with login/logout methods and factory methods for specific API domains
+Create endpoint-specific structs (AccountEndpoints, MarketDataEndpoints, etc.) that take client references
+
+Authentication and Security
+
+Implement the AuthManager for handling Webull's authentication flow
+Support multi-factor authentication, token refresh, and secure credential storage
+Follow the security considerations outlined in section 6, including proper credential handling
+
+Async Programming
+
+Use tokio as the async runtime for all asynchronous operations
+Implement all API calls as async functions returning Result types
+Handle cancellation, timeouts, and concurrent requests properly
+
+Error Handling
+
+Implement the WebullError enum using thiserror as specified in section 3.5
+Ensure comprehensive error handling for API errors, network issues, and authentication failures
+Propagate errors appropriately using the ? operator in async contexts
+
+Models and Data Types
+
+Create strongly-typed models for all API entities (Order, Account, etc.)
+Implement proper serialization/deserialization with serde
+Use appropriate types for values (DateTime for timestamps, enums for statuses)
+
+API Implementation Phases
+
+Follow the phased implementation strategy from section 5:
+
+Core infrastructure first (client, auth, error handling)
+Account and market data endpoints
+Trading functionality
+Streaming API via WebSockets
+Advanced features (rate limiting, persistence)
+
+
+
+Testing Strategy
+
+Write comprehensive unit tests for all public API methods
+Implement integration tests with mock API responses
+Ensure documentation examples are tested and working
+
+Code Examples
+
+Create idiomatic example code for common operations as shown in section 10
+Provide examples for authentication, market data retrieval, and order placement
+Ensure examples are clear, concise, and follow Rust best practices
+
+Documentation
+
+Add comprehensive rustdoc comments to all public API elements
+Create a user guide covering authentication, common use cases, and best practices
+Document potential errors and how to handle them
+
+Key Technical Requirements
+
+Use reqwest with JSON and rustls-tls features for HTTP requests
+Implement proper token management and refresh logic
+Support all API endpoints listed in section 9
+Create type-safe request and response models
+Handle rate limits and implement backoff strategies
+Ensure secure handling of credentials and API keys
+Support both live trading and paper trading accounts
+Implement the WebSocket client for streaming data
+
+When providing code samples for the crate, ensure they are idiomatic Rust, properly handle errors, and follow the structure defined in the PDD.
