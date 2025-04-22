@@ -11,7 +11,13 @@ categories = ["api-bindings", "finance"]
 exclude = [
     ".augment-guidelines",
     "tasks.md",
-    "pdd.md"
+    "pdd.md",
+    ".cargo_vcs_info.json",
+    ".github/workflows/ci.yml",
+    ".gitignore",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md"
 ]
 
 [dependencies]
