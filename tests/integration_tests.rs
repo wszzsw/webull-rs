@@ -10,13 +10,22 @@ async fn test_client_creation() {
 async fn test_login_placeholder() {
     let client = WebullClient::builder().build().unwrap();
     let result = client.login("test", "test").await;
-    
-    // Since login is not yet implemented, we expect an error
+
+    // Since we're using invalid credentials, we expect an error
     assert!(result.is_err());
     match result {
-        Err(WebullError::InvalidRequest(msg)) => {
-            assert!(msg.contains("not yet implemented"));
+        Err(WebullError::NetworkError(_)) => {
+            // This is expected since we're not actually connecting to a real server
         }
-        _ => panic!("Expected InvalidRequest error"),
+        Err(WebullError::InvalidRequest(_)) => {
+            // This is also acceptable if the API is not fully implemented
+        }
+        Err(WebullError::Unauthorized) => {
+            // This is also acceptable if the auth flow is implemented but credentials are invalid
+        }
+        Err(WebullError::ApiError { .. }) => {
+            // This is also acceptable if the API returns an error response
+        }
+        err => panic!("Unexpected result: {:?}", err),
     }
 }

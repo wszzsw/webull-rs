@@ -1,8 +1,8 @@
+use crate::error::{WebullError, WebullResult};
+use base64::{decode, encode};
 use hmac::{Hmac, Mac, NewMac};
 use rand::{thread_rng, Rng};
 use sha2::Sha256;
-use base64::{encode, decode};
-use crate::error::{WebullError, WebullResult};
 
 /// Generate a random device ID.
 pub fn generate_device_id() -> String {
@@ -42,8 +42,8 @@ pub fn decrypt_data(data: &str, _key: &str) -> WebullResult<String> {
     // we would use the actual decryption algorithm used by Webull
 
     // For now, we'll just use base64 decoding as a placeholder
-    let decoded = decode(data)
-        .map_err(|e| WebullError::InvalidRequest(format!("Invalid data: {}", e)))?;
+    let decoded =
+        decode(data).map_err(|e| WebullError::InvalidRequest(format!("Invalid data: {}", e)))?;
 
     let decrypted = String::from_utf8(decoded)
         .map_err(|e| WebullError::InvalidRequest(format!("Invalid UTF-8: {}", e)))?;

@@ -40,7 +40,9 @@ impl RateLimiter {
         let wait_time = {
             // Get the timestamps for this endpoint
             let mut timestamps = self.timestamps.lock().unwrap();
-            let endpoint_timestamps = timestamps.entry(endpoint.to_string()).or_insert_with(Vec::new);
+            let endpoint_timestamps = timestamps
+                .entry(endpoint.to_string())
+                .or_insert_with(Vec::new);
 
             // Remove timestamps older than 1 minute
             endpoint_timestamps.retain(|t| now.duration_since(*t) < Duration::from_secs(60));
@@ -64,7 +66,9 @@ impl RateLimiter {
 
             // Add the current timestamp
             let mut timestamps = self.timestamps.lock().unwrap();
-            let endpoint_timestamps = timestamps.entry(endpoint.to_string()).or_insert_with(Vec::new);
+            let endpoint_timestamps = timestamps
+                .entry(endpoint.to_string())
+                .or_insert_with(Vec::new);
             endpoint_timestamps.push(Instant::now());
         }
     }
@@ -108,10 +112,12 @@ impl BackoffStrategy {
     pub fn get_backoff_duration(&self, attempt: u32) -> Duration {
         match self {
             Self::Constant(duration) => *duration,
-            Self::Linear { initial, increment } => {
-                *initial + *increment * attempt
-            }
-            Self::Exponential { initial, multiplier, max } => {
+            Self::Linear { initial, increment } => *initial + *increment * attempt,
+            Self::Exponential {
+                initial,
+                multiplier,
+                max,
+            } => {
                 let duration = initial.as_secs_f64() * multiplier.powf(attempt as f64);
                 Duration::from_secs_f64(duration.min(max.as_secs_f64()))
             }

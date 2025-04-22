@@ -152,8 +152,8 @@ impl EncryptedCredentialStore {
 
     /// Generate a random string.
     fn generate_random_string(&self, length: usize) -> String {
-        use rand::{thread_rng, Rng};
         use rand::distributions::Alphanumeric;
+        use rand::{thread_rng, Rng};
 
         thread_rng()
             .sample_iter(&Alphanumeric)
@@ -214,21 +214,19 @@ impl EncryptedCredentialStore {
         }
 
         // Read the file
-        let contents = std::fs::read_to_string(path)
-            .map_err(|e| WebullError::InvalidRequest(format!("Failed to read credentials file: {}", e)))?;
+        let contents = std::fs::read_to_string(path).map_err(|e| {
+            WebullError::InvalidRequest(format!("Failed to read credentials file: {}", e))
+        })?;
 
         // Parse the stored credentials
-        let stored: StoredCredentials = serde_json::from_str(&contents)
-            .map_err(|e| WebullError::SerializationError(e))?;
+        let stored: StoredCredentials =
+            serde_json::from_str(&contents).map_err(|e| WebullError::SerializationError(e))?;
 
         // Decrypt the username and password
         let username = self.decrypt(&stored.encrypted_username, &stored.iv, &stored.salt)?;
         let password = self.decrypt(&stored.encrypted_password, &stored.iv, &stored.salt)?;
 
-        Ok(Some(Credentials {
-            username,
-            password,
-        }))
+        Ok(Some(Credentials { username, password }))
     }
 
     /// Save credentials to disk.
@@ -246,12 +244,13 @@ impl EncryptedCredentialStore {
         };
 
         // Serialize to JSON
-        let json = serde_json::to_string(&stored)
-            .map_err(|e| WebullError::SerializationError(e))?;
+        let json =
+            serde_json::to_string(&stored).map_err(|e| WebullError::SerializationError(e))?;
 
         // Write to file
-        std::fs::write(&self.credentials_path, json)
-            .map_err(|e| WebullError::InvalidRequest(format!("Failed to write credentials file: {}", e)))?;
+        std::fs::write(&self.credentials_path, json).map_err(|e| {
+            WebullError::InvalidRequest(format!("Failed to write credentials file: {}", e))
+        })?;
 
         Ok(())
     }
@@ -265,12 +264,13 @@ impl EncryptedCredentialStore {
         }
 
         // Read the file
-        let contents = std::fs::read_to_string(path)
-            .map_err(|e| WebullError::InvalidRequest(format!("Failed to read token file: {}", e)))?;
+        let contents = std::fs::read_to_string(path).map_err(|e| {
+            WebullError::InvalidRequest(format!("Failed to read token file: {}", e))
+        })?;
 
         // Parse the stored token
-        let stored: StoredToken = serde_json::from_str(&contents)
-            .map_err(|e| WebullError::SerializationError(e))?;
+        let stored: StoredToken =
+            serde_json::from_str(&contents).map_err(|e| WebullError::SerializationError(e))?;
 
         // Decrypt the token
         let token = self.decrypt(&stored.encrypted_token, &stored.iv, &stored.salt)?;
@@ -315,12 +315,13 @@ impl EncryptedCredentialStore {
         };
 
         // Serialize to JSON
-        let json = serde_json::to_string(&stored)
-            .map_err(|e| WebullError::SerializationError(e))?;
+        let json =
+            serde_json::to_string(&stored).map_err(|e| WebullError::SerializationError(e))?;
 
         // Write to file
-        std::fs::write(&self.token_path, json)
-            .map_err(|e| WebullError::InvalidRequest(format!("Failed to write token file: {}", e)))?;
+        std::fs::write(&self.token_path, json).map_err(|e| {
+            WebullError::InvalidRequest(format!("Failed to write token file: {}", e))
+        })?;
 
         Ok(())
     }
@@ -361,8 +362,9 @@ impl CredentialStore for EncryptedCredentialStore {
         // Remove the file if it exists
         let path = Path::new(&self.credentials_path);
         if path.exists() {
-            std::fs::remove_file(path)
-                .map_err(|e| WebullError::InvalidRequest(format!("Failed to remove credentials file: {}", e)))?;
+            std::fs::remove_file(path).map_err(|e| {
+                WebullError::InvalidRequest(format!("Failed to remove credentials file: {}", e))
+            })?;
         }
 
         Ok(())
@@ -402,8 +404,9 @@ impl CredentialStore for EncryptedCredentialStore {
         // Remove the file if it exists
         let path = Path::new(&self.token_path);
         if path.exists() {
-            std::fs::remove_file(path)
-                .map_err(|e| WebullError::InvalidRequest(format!("Failed to remove token file: {}", e)))?;
+            std::fs::remove_file(path).map_err(|e| {
+                WebullError::InvalidRequest(format!("Failed to remove token file: {}", e))
+            })?;
         }
 
         Ok(())

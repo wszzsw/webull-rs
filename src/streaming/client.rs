@@ -1,6 +1,8 @@
-use crate::auth::{AuthManager, AccessToken};
+use crate::auth::{AccessToken, AuthManager};
 use crate::error::{WebullError, WebullResult};
-use crate::streaming::events::{Event, EventType, ConnectionState, ConnectionStatus, ErrorEvent, HeartbeatEvent};
+use crate::streaming::events::{
+    ConnectionState, ConnectionStatus, ErrorEvent, Event, EventType, HeartbeatEvent,
+};
 use crate::streaming::subscription::{SubscriptionRequest, UnsubscriptionRequest};
 use crate::utils::serialization::{from_json, to_json};
 use futures_util::{SinkExt, StreamExt};
@@ -11,7 +13,9 @@ use std::time::{Duration, Instant};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio::time::sleep;
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{
+    connect_async, tungstenite::protocol::Message, MaybeTlsStream, WebSocketStream,
+};
 use url::Url;
 use uuid::Uuid;
 
@@ -146,17 +150,26 @@ impl WebSocketClient {
                         let event = Event {
                             event_type: EventType::Connection,
                             timestamp: chrono::Utc::now(),
-                            data: crate::streaming::events::EventData::Connection(ConnectionStatus {
-                                status: ConnectionState::Connected,
-                                connection_id: Some(connection_id.clone()),
-                                message: Some("Connection established".to_string()),
-                            }),
+                            data: crate::streaming::events::EventData::Connection(
+                                ConnectionStatus {
+                                    status: ConnectionState::Connected,
+                                    connection_id: Some(connection_id.clone()),
+                                    message: Some("Connection established".to_string()),
+                                },
+                            ),
                         };
 
                         let _ = tx.send(event).await;
 
                         // Handle the WebSocket connection
-                        if let Err(e) = Self::handle_websocket(ws_stream, tx.clone(), last_heartbeat.clone(), heartbeat_interval).await {
+                        if let Err(e) = Self::handle_websocket(
+                            ws_stream,
+                            tx.clone(),
+                            last_heartbeat.clone(),
+                            heartbeat_interval,
+                        )
+                        .await
+                        {
                             // Send an error event
                             let event = Event {
                                 event_type: EventType::Error,
@@ -177,11 +190,13 @@ impl WebSocketClient {
                         let event = Event {
                             event_type: EventType::Connection,
                             timestamp: chrono::Utc::now(),
-                            data: crate::streaming::events::EventData::Connection(ConnectionStatus {
-                                status: ConnectionState::Disconnected,
-                                connection_id: Some(connection_id),
-                                message: Some("Connection closed".to_string()),
-                            }),
+                            data: crate::streaming::events::EventData::Connection(
+                                ConnectionStatus {
+                                    status: ConnectionState::Disconnected,
+                                    connection_id: Some(connection_id),
+                                    message: Some("Connection closed".to_string()),
+                                },
+                            ),
                         };
 
                         let _ = tx.send(event).await;
@@ -240,7 +255,9 @@ impl WebSocketClient {
     pub async fn subscribe(&self, request: SubscriptionRequest) -> WebullResult<()> {
         // Check if we're connected
         if *self.connection_state.lock().unwrap() != ConnectionState::Connected {
-            return Err(WebullError::InvalidRequest("Not connected to WebSocket server".to_string()));
+            return Err(WebullError::InvalidRequest(
+                "Not connected to WebSocket server".to_string(),
+            ));
         }
 
         // Send the subscription request
@@ -262,7 +279,9 @@ impl WebSocketClient {
                 }),
             };
 
-            tx.send(event).await.map_err(|e| WebullError::InvalidRequest(format!("Failed to send message: {}", e)))?;
+            tx.send(event).await.map_err(|e| {
+                WebullError::InvalidRequest(format!("Failed to send message: {}", e))
+            })?;
         }
 
         Ok(())
@@ -272,7 +291,9 @@ impl WebSocketClient {
     pub async fn unsubscribe(&self, request: UnsubscriptionRequest) -> WebullResult<()> {
         // Check if we're connected
         if *self.connection_state.lock().unwrap() != ConnectionState::Connected {
-            return Err(WebullError::InvalidRequest("Not connected to WebSocket server".to_string()));
+            return Err(WebullError::InvalidRequest(
+                "Not connected to WebSocket server".to_string(),
+            ));
         }
 
         // Send the unsubscription request
@@ -294,24 +315,35 @@ impl WebSocketClient {
                 }),
             };
 
-            tx.send(event).await.map_err(|e| WebullError::InvalidRequest(format!("Failed to send message: {}", e)))?;
+            tx.send(event).await.map_err(|e| {
+                WebullError::InvalidRequest(format!("Failed to send message: {}", e))
+            })?;
         }
 
         Ok(())
     }
 
     /// Connect to the WebSocket server.
-    async fn connect_websocket(base_url: &str, token: &AccessToken) -> WebullResult<WebSocketStream<MaybeTlsStream<TcpStream>>> {
+    async fn connect_websocket(
+        base_url: &str,
+        token: &AccessToken,
+    ) -> WebullResult<WebSocketStream<MaybeTlsStream<TcpStream>>> {
         // Create the WebSocket URL
         let ws_url = format!("{}/ws", base_url.replace("http", "ws"));
-        let url = Url::parse(&ws_url).map_err(|e| WebullError::InvalidRequest(format!("Invalid WebSocket URL: {}", e)))?;
+        let url = Url::parse(&ws_url)
+            .map_err(|e| WebullError::InvalidRequest(format!("Invalid WebSocket URL: {}", e)))?;
 
         // Create the request headers
         let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", token.token)).unwrap());
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {}", token.token)).unwrap(),
+        );
 
         // Connect to the WebSocket server
-        let (ws_stream, _) = connect_async(url).await.map_err(|e| WebullError::InvalidRequest(format!("WebSocket connection error: {}", e)))?;
+        let (ws_stream, _) = connect_async(url).await.map_err(|e| {
+            WebullError::InvalidRequest(format!("WebSocket connection error: {}", e))
+        })?;
 
         Ok(ws_stream)
     }
@@ -430,7 +462,7 @@ impl WebSocketClient {
                 Ok(Message::Close(_)) => {
                     // Connection closed
                     break;
-                },
+                }
                 Ok(Message::Frame(_)) => {
                     // Ignore frame messages
                 }

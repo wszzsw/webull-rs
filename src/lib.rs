@@ -10,15 +10,15 @@ pub mod config;
 pub mod error;
 
 // Re-export models and endpoints
-pub mod models;
 pub mod endpoints;
-pub mod utils;
+pub mod models;
 pub mod streaming;
+pub mod utils;
 
 // Re-export key types for convenience
 pub use client::{WebullClient, WebullClientBuilder};
-pub use error::{WebullError, WebullResult};
 pub use config::WebullConfig;
+pub use error::{WebullError, WebullResult};
 
 #[cfg(test)]
 mod tests {
@@ -30,3 +30,5 @@ mod tests {
         assert!(client.is_ok());
     }
 }
+
+// Test modules will be added in the future

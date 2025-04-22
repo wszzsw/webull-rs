@@ -1,5 +1,5 @@
-use crate::error::{WebullError, WebullResult};
 use crate::config::WebullConfig;
+use crate::error::{WebullError, WebullResult};
 use crate::utils::crypto::{encrypt_password, generate_signature, generate_timestamp};
 use crate::utils::serialization::{from_json, to_json};
 use chrono::{DateTime, Utc};
@@ -96,7 +96,11 @@ impl AuthManager {
     }
 
     /// Authenticate with username and password.
-    pub async fn authenticate(&mut self, username: &str, password: &str) -> WebullResult<AccessToken> {
+    pub async fn authenticate(
+        &mut self,
+        username: &str,
+        password: &str,
+    ) -> WebullResult<AccessToken> {
         // Store credentials for potential token refresh
         self.credentials = Some(Credentials {
             username: username.to_string(),
@@ -104,7 +108,10 @@ impl AuthManager {
         });
 
         // Encrypt the password
-        let encrypted_password = encrypt_password(password, &self.config.api_secret.clone().unwrap_or_default())?;
+        let encrypted_password = encrypt_password(
+            password,
+            &self.config.api_secret.clone().unwrap_or_default(),
+        )?;
 
         // Create the request body
         let body = json!({
@@ -138,7 +145,12 @@ impl AuthManager {
         headers.insert("signature", HeaderValue::from_str(&signature).unwrap());
 
         // Send the request
-        let response = self.client.post(format!("{}/api/passport/login/v5/account", self.config.base_url))
+        let response = self
+            .client
+            .post(format!(
+                "{}/api/passport/login/v5/account",
+                self.config.base_url
+            ))
             .headers(headers)
             .json(&body)
             .send()
@@ -148,7 +160,10 @@ impl AuthManager {
         // Check for errors
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
 
             if status.as_u16() == 401 {
                 return Err(WebullError::Unauthorized);
@@ -163,7 +178,9 @@ impl AuthManager {
         }
 
         // Parse the response
-        let response_text = response.text().await
+        let response_text = response
+            .text()
+            .await
             .map_err(|e| WebullError::NetworkError(e))?;
 
         #[derive(Debug, Deserialize)]
@@ -192,8 +209,9 @@ impl AuthManager {
     /// Handle multi-factor authentication.
     pub async fn multi_factor_auth(&mut self, mfa_code: &str) -> WebullResult<AccessToken> {
         // Check if we have credentials
-        let credentials = self.credentials.as_ref()
-            .ok_or_else(|| WebullError::InvalidRequest("No credentials available for MFA".to_string()))?;
+        let credentials = self.credentials.as_ref().ok_or_else(|| {
+            WebullError::InvalidRequest("No credentials available for MFA".to_string())
+        })?;
 
         // Create the request body
         let body = json!({
@@ -225,7 +243,12 @@ impl AuthManager {
         headers.insert("signature", HeaderValue::from_str(&signature).unwrap());
 
         // Send the request
-        let response = self.client.post(format!("{}/api/passport/verificationCode/verify", self.config.base_url))
+        let response = self
+            .client
+            .post(format!(
+                "{}/api/passport/verificationCode/verify",
+                self.config.base_url
+            ))
             .headers(headers)
             .json(&body)
             .send()
@@ -235,7 +258,10 @@ impl AuthManager {
         // Check for errors
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
 
             if status.as_u16() == 401 {
                 return Err(WebullError::Unauthorized);
@@ -250,7 +276,9 @@ impl AuthManager {
         }
 
         // Parse the response
-        let response_text = response.text().await
+        let response_text = response
+            .text()
+            .await
             .map_err(|e| WebullError::NetworkError(e))?;
 
         #[derive(Debug, Deserialize)]
@@ -279,11 +307,13 @@ impl AuthManager {
     /// Refresh the access token.
     pub async fn refresh_token(&mut self) -> WebullResult<AccessToken> {
         // Get the current token
-        let current_token = self.token_store.get_token()?
-            .ok_or_else(|| WebullError::InvalidRequest("No token available for refresh".to_string()))?;
+        let current_token = self.token_store.get_token()?.ok_or_else(|| {
+            WebullError::InvalidRequest("No token available for refresh".to_string())
+        })?;
 
         // Check if we have a refresh token
-        let refresh_token = current_token.refresh_token
+        let refresh_token = current_token
+            .refresh_token
             .ok_or_else(|| WebullError::InvalidRequest("No refresh token available".to_string()))?;
 
         // Create the request body
@@ -315,7 +345,12 @@ impl AuthManager {
         headers.insert("signature", HeaderValue::from_str(&signature).unwrap());
 
         // Send the request
-        let response = self.client.post(format!("{}/api/passport/refreshToken", self.config.base_url))
+        let response = self
+            .client
+            .post(format!(
+                "{}/api/passport/refreshToken",
+                self.config.base_url
+            ))
             .headers(headers)
             .json(&body)
             .send()
@@ -325,7 +360,10 @@ impl AuthManager {
         // Check for errors
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
 
             if status.as_u16() == 401 {
                 return Err(WebullError::Unauthorized);
@@ -340,7 +378,9 @@ impl AuthManager {
         }
 
         // Parse the response
-        let response_text = response.text().await
+        let response_text = response
+            .text()
+            .await
             .map_err(|e| WebullError::NetworkError(e))?;
 
         #[derive(Debug, Deserialize)]
@@ -401,7 +441,10 @@ impl AuthManager {
         // Create headers
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
-        headers.insert(AUTHORIZATION, HeaderValue::from_str(&format!("Bearer {}", current_token.token)).unwrap());
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&format!("Bearer {}", current_token.token)).unwrap(),
+        );
 
         // Add API key if available
         if let Some(api_key) = &self.config.api_key {
@@ -422,7 +465,9 @@ impl AuthManager {
         headers.insert("signature", HeaderValue::from_str(&signature).unwrap());
 
         // Send the request
-        let response = self.client.post(format!("{}/api/passport/logout", self.config.base_url))
+        let response = self
+            .client
+            .post(format!("{}/api/passport/logout", self.config.base_url))
             .headers(headers)
             .json(&body)
             .send()
@@ -432,7 +477,10 @@ impl AuthManager {
         // Check for errors
         if !response.status().is_success() {
             let status = response.status();
-            let text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+            let text = response
+                .text()
+                .await
+                .unwrap_or_else(|_| "Unknown error".to_string());
 
             if status.as_u16() == 401 {
                 // Token is already invalid, so we can just clear it

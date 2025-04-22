@@ -1,5 +1,5 @@
-use webull_rs::WebullClient;
 use std::time::Duration;
+use webull_rs::WebullClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

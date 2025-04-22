@@ -1,7 +1,7 @@
 use crate::models::market::Quote;
 use crate::models::order::Order;
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 /// Event types for WebSocket messages.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -9,28 +9,28 @@ use chrono::{DateTime, Utc};
 pub enum EventType {
     /// Quote update event
     Quote,
-    
+
     /// Order update event
     Order,
-    
+
     /// Account update event
     Account,
-    
+
     /// Trade update event
     Trade,
-    
+
     /// Connection status event
     Connection,
-    
+
     /// Subscription status event
     Subscription,
-    
+
     /// Error event
     Error,
-    
+
     /// Heartbeat event
     Heartbeat,
-    
+
     /// Unknown event
     Unknown,
 }
@@ -41,10 +41,10 @@ pub struct Event {
     /// Event type
     #[serde(rename = "type")]
     pub event_type: EventType,
-    
+
     /// Event timestamp
     pub timestamp: DateTime<Utc>,
-    
+
     /// Event data
     #[serde(flatten)]
     pub data: EventData,
@@ -56,22 +56,22 @@ pub struct Event {
 pub enum EventData {
     /// Quote update event data
     Quote(Quote),
-    
+
     /// Order update event data
     Order(Order),
-    
+
     /// Connection status event data
     Connection(ConnectionStatus),
-    
+
     /// Subscription status event data
     Subscription(SubscriptionStatus),
-    
+
     /// Error event data
     Error(ErrorEvent),
-    
+
     /// Heartbeat event data
     Heartbeat(HeartbeatEvent),
-    
+
     /// Unknown event data
     Unknown(serde_json::Value),
 }
@@ -81,10 +81,10 @@ pub enum EventData {
 pub struct ConnectionStatus {
     /// Connection status
     pub status: ConnectionState,
-    
+
     /// Connection ID
     pub connection_id: Option<String>,
-    
+
     /// Connection message
     pub message: Option<String>,
 }
@@ -95,13 +95,13 @@ pub struct ConnectionStatus {
 pub enum ConnectionState {
     /// Connected
     Connected,
-    
+
     /// Disconnected
     Disconnected,
-    
+
     /// Reconnecting
     Reconnecting,
-    
+
     /// Failed
     Failed,
 }
@@ -111,10 +111,10 @@ pub enum ConnectionState {
 pub struct SubscriptionStatus {
     /// Subscription ID
     pub subscription_id: String,
-    
+
     /// Subscription status
     pub status: SubscriptionState,
-    
+
     /// Subscription message
     pub message: Option<String>,
 }
@@ -125,10 +125,10 @@ pub struct SubscriptionStatus {
 pub enum SubscriptionState {
     /// Subscribed
     Subscribed,
-    
+
     /// Unsubscribed
     Unsubscribed,
-    
+
     /// Failed
     Failed,
 }
@@ -138,7 +138,7 @@ pub enum SubscriptionState {
 pub struct ErrorEvent {
     /// Error code
     pub code: String,
-    
+
     /// Error message
     pub message: String,
 }

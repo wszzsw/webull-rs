@@ -1,5 +1,5 @@
-use webull_rs::{WebullClient, WebullError};
 use std::time::{Duration, Instant};
+use webull_rs::{WebullClient, WebullError};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_api_secret("your-api-secret")
         .with_timeout(Duration::from_secs(30))
         .build()?;
-    
+
     // Login to Webull
     println!("Logging in...");
     match client.login("username", "password").await {
@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     // Make a request to get account information
     println!("\nGetting account information (first request)...");
     let start = Instant::now();
@@ -40,14 +40,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Make the same request again (should be cached)
     println!("\nGetting account information (second request, should be cached)...");
     let start = Instant::now();
     match client.accounts().get_accounts().await {
         Ok(accounts) => {
             let elapsed = start.elapsed();
-            println!("Found {} accounts in {:?} (should be faster)", accounts.len(), elapsed);
+            println!(
+                "Found {} accounts in {:?} (should be faster)",
+                accounts.len(),
+                elapsed
+            );
         }
         Err(WebullError::InvalidRequest(msg)) => {
             println!("API not yet implemented: {}", msg);
@@ -56,7 +60,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Make a request to get a quote
     println!("\nGetting quote for AAPL (first request)...");
     let start = Instant::now();
@@ -73,7 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Make the same request again (should be cached)
     println!("\nGetting quote for AAPL (second request, should be cached)...");
     let start = Instant::now();
@@ -90,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Logout from Webull
     println!("\nLogging out...");
     match client.logout().await {
@@ -104,6 +108,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     Ok(())
 }

@@ -5,19 +5,19 @@ use std::time::Duration;
 pub struct WebullConfig {
     /// API key for authentication
     pub api_key: Option<String>,
-    
+
     /// API secret for authentication
     pub api_secret: Option<String>,
-    
+
     /// Device ID for authentication
     pub device_id: Option<String>,
-    
+
     /// Timeout for API requests
     pub timeout: Duration,
-    
+
     /// Base URL for API requests
     pub base_url: String,
-    
+
     /// Whether to use paper trading
     pub paper_trading: bool,
 }

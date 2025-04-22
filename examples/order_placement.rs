@@ -1,6 +1,6 @@
-use webull_rs::{WebullClient, WebullError};
-use webull_rs::models::order::{OrderRequest, OrderSide, OrderType, TimeInForce};
 use std::time::Duration;
+use webull_rs::models::order::{OrderRequest, OrderSide, OrderType, TimeInForce};
+use webull_rs::{WebullClient, WebullError};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -10,10 +10,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_api_secret("your-api-secret")
         .with_timeout(Duration::from_secs(30))
         .build()?;
-    
+
     // Note: The API calls are not yet implemented with actual API integration
     // This is just a demonstration of how the API would be used
-    
+
     println!("Logging in...");
     match client.login("username", "password").await {
         Ok(_) => {
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     // Create a market order to buy 1 share of AAPL
     let market_order = OrderRequest::new()
         .symbol("AAPL")
@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .side(OrderSide::Buy)
         .order_type(OrderType::Market)
         .time_in_force(TimeInForce::Day);
-    
+
     println!("\nPlacing market order for AAPL...");
     match client.orders().place_order(&market_order).await {
         Ok(response) => {
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("  Status: {:?}", response.status);
             println!("  Symbol: {}", response.symbol);
             println!("  Quantity: {}", response.quantity);
-            
+
             // Get the order details
             println!("\nGetting order details...");
             match client.orders().get_order(&response.id).await {
@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     println!("Error: {}", e);
                 }
             }
-            
+
             // Cancel the order
             println!("\nCanceling order...");
             match client.orders().cancel_order(&response.id).await {
@@ -85,7 +85,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Create a limit order to buy 1 share of AAPL at $150
     let limit_order = OrderRequest::new()
         .symbol("AAPL")
@@ -94,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .side(OrderSide::Buy)
         .order_type(OrderType::Limit)
         .time_in_force(TimeInForce::Gtc);
-    
+
     println!("\nPlacing limit order for AAPL...");
     match client.orders().place_order(&limit_order).await {
         Ok(response) => {
@@ -112,7 +112,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     // Get active orders
     println!("\nGetting active orders...");
     match client.orders().get_active_orders().await {
@@ -134,7 +134,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     println!("\nLogging out...");
     match client.logout().await {
         Ok(_) => {
@@ -147,6 +147,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Error: {}", e);
         }
     }
-    
+
     Ok(())
 }

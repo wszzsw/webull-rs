@@ -5,15 +5,15 @@ use serde::{Deserialize, Serialize};
 pub struct ApiResponse<T> {
     /// Success flag
     pub success: bool,
-    
+
     /// Response data
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<T>,
-    
+
     /// Error code
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<String>,
-    
+
     /// Error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
@@ -29,7 +29,7 @@ impl<T> ApiResponse<T> {
             message: None,
         }
     }
-    
+
     /// Create a new error response.
     pub fn error(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
@@ -39,12 +39,12 @@ impl<T> ApiResponse<T> {
             message: Some(message.into()),
         }
     }
-    
+
     /// Check if the response is successful.
     pub fn is_success(&self) -> bool {
         self.success
     }
-    
+
     /// Get the data from the response.
     pub fn get_data(&self) -> Option<&T> {
         self.data.as_ref()
@@ -56,13 +56,13 @@ impl<T> ApiResponse<T> {
 pub struct Pagination {
     /// Current page
     pub page: u32,
-    
+
     /// Page size
     pub page_size: u32,
-    
+
     /// Total number of items
     pub total: u32,
-    
+
     /// Total number of pages
     pub total_pages: u32,
 }
@@ -72,19 +72,19 @@ pub struct Pagination {
 pub struct PaginatedResponse<T> {
     /// Success flag
     pub success: bool,
-    
+
     /// Response data
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<Vec<T>>,
-    
+
     /// Pagination information
     #[serde(skip_serializing_if = "Option::is_none")]
     pub pagination: Option<Pagination>,
-    
+
     /// Error code
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code: Option<String>,
-    
+
     /// Error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
@@ -101,7 +101,7 @@ impl<T> PaginatedResponse<T> {
             message: None,
         }
     }
-    
+
     /// Create a new error response.
     pub fn error(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
@@ -112,17 +112,17 @@ impl<T> PaginatedResponse<T> {
             message: Some(message.into()),
         }
     }
-    
+
     /// Check if the response is successful.
     pub fn is_success(&self) -> bool {
         self.success
     }
-    
+
     /// Get the data from the response.
     pub fn get_data(&self) -> Option<&Vec<T>> {
         self.data.as_ref()
     }
-    
+
     /// Get the pagination information.
     pub fn get_pagination(&self) -> Option<&Pagination> {
         self.pagination.as_ref()

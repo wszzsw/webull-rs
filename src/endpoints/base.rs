@@ -3,8 +3,8 @@ use crate::error::{WebullError, WebullResult};
 use crate::models::response::ApiResponse;
 use crate::utils::cache::CacheManager;
 use crate::utils::rate_limit::RateLimiter;
-use reqwest::{Client, Method, RequestBuilder, StatusCode};
 use reqwest::header::AUTHORIZATION;
+use reqwest::{Client, Method, RequestBuilder, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::sync::Arc;
@@ -56,7 +56,8 @@ impl BaseEndpoint {
         T: DeserializeOwned + Clone,
     {
         // Clone the request URL to get the path
-        let req_url = request.try_clone()
+        let req_url = request
+            .try_clone()
             .ok_or_else(|| WebullError::InvalidRequest("Failed to clone request".to_string()))?
             .build()
             .map_err(WebullError::NetworkError)?
@@ -76,7 +77,8 @@ impl BaseEndpoint {
         // Handle rate limiting
         if status == StatusCode::TOO_MANY_REQUESTS {
             // Get the retry-after header if available
-            let retry_after = response.headers()
+            let retry_after = response
+                .headers()
                 .get("retry-after")
                 .and_then(|h| h.to_str().ok())
                 .and_then(|s| s.parse::<u64>().ok())
@@ -105,22 +107,27 @@ impl BaseEndpoint {
         }
 
         // Parse the response
-        let api_response: ApiResponse<T> = serde_json::from_str(&body)
-            .map_err(|e| WebullError::SerializationError(e))?;
+        let api_response: ApiResponse<T> =
+            serde_json::from_str(&body).map_err(|e| WebullError::SerializationError(e))?;
 
         // Check for API errors
         if !api_response.is_success() {
             return Err(WebullError::ApiError {
                 code: api_response.code.unwrap_or_else(|| "unknown".to_string()),
-                message: api_response.message.unwrap_or_else(|| "Unknown error".to_string()),
+                message: api_response
+                    .message
+                    .unwrap_or_else(|| "Unknown error".to_string()),
             });
         }
 
         // Return the data
-        api_response.get_data().cloned().ok_or_else(|| WebullError::ApiError {
-            code: "no_data".to_string(),
-            message: "Response did not contain data".to_string(),
-        })
+        api_response
+            .get_data()
+            .cloned()
+            .ok_or_else(|| WebullError::ApiError {
+                code: "no_data".to_string(),
+                message: "Response did not contain data".to_string(),
+            })
     }
 
     /// Build a URL for the API.
@@ -136,7 +143,10 @@ impl BaseEndpoint {
     }
 
     /// Add authentication headers to a request.
-    pub async fn authenticate_request(&self, request: RequestBuilder) -> WebullResult<RequestBuilder> {
+    pub async fn authenticate_request(
+        &self,
+        request: RequestBuilder,
+    ) -> WebullResult<RequestBuilder> {
         // Get the token from the auth manager
         let token = self.auth_manager.get_token().await?;
 
@@ -163,7 +173,14 @@ impl BaseEndpoint {
         let response: T = self.send_request(request).await?;
 
         // Cache the response
-        cache.set("GET", path, None, None, response.clone(), Some(Duration::from_secs(60)));
+        cache.set(
+            "GET",
+            path,
+            None,
+            None,
+            response.clone(),
+            Some(Duration::from_secs(60)),
+        );
 
         Ok(response)
     }
@@ -197,7 +214,14 @@ impl BaseEndpoint {
         // Cache the response if the body is cacheable
         if let Some(body_str) = body_str {
             let cache = self.cache_manager.get_cache::<T>("post");
-            cache.set("POST", path, None, Some(&body_str), response.clone(), Some(Duration::from_secs(60)));
+            cache.set(
+                "POST",
+                path,
+                None,
+                Some(&body_str),
+                response.clone(),
+                Some(Duration::from_secs(60)),
+            );
         }
 
         Ok(response)

@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 pub enum SubscriptionType {
     /// Quote subscription
     Quote,
-    
+
     /// Order subscription
     Order,
-    
+
     /// Account subscription
     Account,
-    
+
     /// Trade subscription
     Trade,
 }
@@ -23,11 +23,11 @@ pub struct SubscriptionRequest {
     /// Subscription type
     #[serde(rename = "type")]
     pub subscription_type: SubscriptionType,
-    
+
     /// Symbols to subscribe to (for quote subscriptions)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub symbols: Option<Vec<String>>,
-    
+
     /// Account ID to subscribe to (for order, account, and trade subscriptions)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<String>,
@@ -42,7 +42,7 @@ impl SubscriptionRequest {
             account_id: None,
         }
     }
-    
+
     /// Create a new order subscription request.
     pub fn new_order(account_id: String) -> Self {
         Self {
@@ -51,7 +51,7 @@ impl SubscriptionRequest {
             account_id: Some(account_id),
         }
     }
-    
+
     /// Create a new account subscription request.
     pub fn new_account(account_id: String) -> Self {
         Self {
@@ -60,7 +60,7 @@ impl SubscriptionRequest {
             account_id: Some(account_id),
         }
     }
-    
+
     /// Create a new trade subscription request.
     pub fn new_trade(account_id: String) -> Self {
         Self {
@@ -77,11 +77,11 @@ pub struct UnsubscriptionRequest {
     /// Subscription type
     #[serde(rename = "type")]
     pub subscription_type: SubscriptionType,
-    
+
     /// Symbols to unsubscribe from (for quote subscriptions)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub symbols: Option<Vec<String>>,
-    
+
     /// Account ID to unsubscribe from (for order, account, and trade subscriptions)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<String>,
@@ -96,7 +96,7 @@ impl UnsubscriptionRequest {
             account_id: None,
         }
     }
-    
+
     /// Create a new order unsubscription request.
     pub fn new_order(account_id: String) -> Self {
         Self {
@@ -105,7 +105,7 @@ impl UnsubscriptionRequest {
             account_id: Some(account_id),
         }
     }
-    
+
     /// Create a new account unsubscription request.
     pub fn new_account(account_id: String) -> Self {
         Self {
@@ -114,7 +114,7 @@ impl UnsubscriptionRequest {
             account_id: Some(account_id),
         }
     }
-    
+
     /// Create a new trade unsubscription request.
     pub fn new_trade(account_id: String) -> Self {
         Self {

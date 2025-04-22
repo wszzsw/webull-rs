@@ -1,6 +1,9 @@
 use crate::auth::{AuthManager, MemoryTokenStore, TokenStore};
 use crate::config::WebullConfig;
-use crate::endpoints::{account::AccountEndpoints, market_data::MarketDataEndpoints, orders::OrderEndpoints, watchlists::WatchlistEndpoints};
+use crate::endpoints::{
+    account::AccountEndpoints, market_data::MarketDataEndpoints, orders::OrderEndpoints,
+    watchlists::WatchlistEndpoints,
+};
 use crate::error::{WebullError, WebullResult};
 use crate::streaming::client::WebSocketClient;
 use crate::utils::credentials::{CredentialStore, MemoryCredentialStore};
@@ -71,6 +74,12 @@ impl WebullClientBuilder {
         self
     }
 
+    /// Enable paper trading.
+    pub fn paper_trading(mut self) -> Self {
+        self.paper_trading = true;
+        self
+    }
+
     /// Set a custom token store.
     pub fn with_token_store(mut self, store: impl TokenStore + 'static) -> Self {
         self.token_store = Some(Box::new(store));
@@ -86,7 +95,9 @@ impl WebullClientBuilder {
     /// Build the WebullClient.
     pub fn build(self) -> WebullResult<WebullClient> {
         // Generate a random device ID if not provided
-        let device_id = self.device_id.unwrap_or_else(|| Uuid::new_v4().to_hyphenated().to_string());
+        let device_id = self
+            .device_id
+            .unwrap_or_else(|| Uuid::new_v4().to_hyphenated().to_string());
 
         // Create the configuration
         let config = WebullConfig {
@@ -105,13 +116,21 @@ impl WebullClientBuilder {
             .map_err(|e| WebullError::NetworkError(e))?;
 
         // Create the token store
-        let token_store = self.token_store.unwrap_or_else(|| Box::new(MemoryTokenStore::default()));
+        let token_store = self
+            .token_store
+            .unwrap_or_else(|| Box::new(MemoryTokenStore::default()));
 
         // Create the credential store
-        let credential_store = self.credential_store.unwrap_or_else(|| Box::new(MemoryCredentialStore::default()));
+        let credential_store = self
+            .credential_store
+            .unwrap_or_else(|| Box::new(MemoryCredentialStore::default()));
 
         // Create the auth manager
-        let auth_manager = Arc::new(AuthManager::new(config.clone(), token_store, client.clone()));
+        let auth_manager = Arc::new(AuthManager::new(
+            config.clone(),
+            token_store,
+            client.clone(),
+        ));
 
         Ok(WebullClient {
             inner: client,
@@ -215,7 +234,9 @@ impl WebullClient {
         let token = match self.auth_manager.token_store.get_token()? {
             Some(token) => token,
             None => {
-                return Err(WebullError::InvalidRequest("No token available for refresh".to_string()));
+                return Err(WebullError::InvalidRequest(
+                    "No token available for refresh".to_string(),
+                ));
             }
         };
 
@@ -281,5 +302,38 @@ impl WebullClient {
     /// Get the credential store.
     pub fn credential_store(&self) -> &Arc<Box<dyn CredentialStore>> {
         &self.credential_store
+    }
+
+    /// Check if the client is configured for paper trading.
+    pub fn is_paper_trading(&self) -> bool {
+        self.config.paper_trading
+    }
+
+    /// Create a new client for paper trading.
+    pub fn paper_trading(&self) -> WebullResult<Self> {
+        let mut config = self.config.clone();
+        config.paper_trading = true;
+
+        // Create a new client with the same settings but for paper trading
+        let client = reqwest::ClientBuilder::new()
+            .timeout(config.timeout)
+            .build()
+            .map_err(|e| WebullError::NetworkError(e))?;
+
+        let token_store = Box::new(MemoryTokenStore::default());
+        let credential_store = Box::new(MemoryCredentialStore::default());
+
+        let auth_manager = Arc::new(AuthManager::new(
+            config.clone(),
+            token_store,
+            client.clone(),
+        ));
+
+        Ok(Self {
+            inner: client,
+            config,
+            auth_manager,
+            credential_store: Arc::new(credential_store),
+        })
     }
 }

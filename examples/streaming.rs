@@ -1,7 +1,7 @@
-use webull_rs::{WebullClient, WebullError};
-use webull_rs::streaming::events::{Event, EventType};
-use webull_rs::streaming::subscription::SubscriptionRequest;
 use std::time::Duration;
+use webull_rs::streaming::events::EventType;
+use webull_rs::streaming::subscription::SubscriptionRequest;
+use webull_rs::{WebullClient, WebullError};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_api_secret("your-api-secret")
         .with_timeout(Duration::from_secs(30))
         .build()?;
-    
+
     // Login to Webull
     println!("Logging in...");
     match client.login("username", "password").await {
@@ -26,11 +26,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     // Create a WebSocket client
     println!("Creating WebSocket client...");
     let mut ws_client = client.streaming();
-    
+
     // Connect to the WebSocket server
     println!("Connecting to WebSocket server...");
     let mut event_receiver = match ws_client.connect().await {
@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     };
-    
+
     // Subscribe to quotes for AAPL and MSFT
     println!("Subscribing to quotes...");
     let subscription = SubscriptionRequest::new_quote(vec!["AAPL".to_string(), "MSFT".to_string()]);
@@ -56,29 +56,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     // Handle events for 60 seconds
     println!("Handling events for 60 seconds...");
     let start_time = std::time::Instant::now();
-    
+
     while start_time.elapsed() < Duration::from_secs(60) {
         match tokio::time::timeout(Duration::from_secs(1), event_receiver.recv()).await {
-            Ok(Some(event)) => {
-                match event.event_type {
-                    EventType::Quote => {
-                        println!("Received quote update: {:?}", event);
-                    }
-                    EventType::Connection => {
-                        println!("Connection event: {:?}", event);
-                    }
-                    EventType::Error => {
-                        println!("Error event: {:?}", event);
-                    }
-                    _ => {
-                        println!("Other event: {:?}", event);
-                    }
+            Ok(Some(event)) => match event.event_type {
+                EventType::Quote => {
+                    println!("Received quote update: {:?}", event);
                 }
-            }
+                EventType::Connection => {
+                    println!("Connection event: {:?}", event);
+                }
+                EventType::Error => {
+                    println!("Error event: {:?}", event);
+                }
+                _ => {
+                    println!("Other event: {:?}", event);
+                }
+            },
             Ok(None) => {
                 // Channel closed
                 println!("Event channel closed");
@@ -89,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     // Disconnect from the WebSocket server
     println!("Disconnecting from WebSocket server...");
     match ws_client.disconnect().await {
@@ -101,7 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     // Logout from Webull
     println!("Logging out...");
     match client.logout().await {
@@ -115,6 +113,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return Err(e.into());
         }
     }
-    
+
     Ok(())
 }

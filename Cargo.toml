@@ -1,27 +1,27 @@
 [package]
 name = "webull-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A Rust client for the Webull trading API"
 authors = ["Chairon <wszzsw@nullified.xyz>"]
 license = "MIT"
 repository = "https://github.com/wszzsw/webull-rs"
+documentation = "https://docs.rs/webull-rs"
+homepage = "https://github.com/wszzsw/webull-rs"
+readme = "README.md"
 keywords = ["webull", "trading", "finance", "api", "stocks"]
 categories = ["api-bindings", "finance"]
-exclude = [
-    ".augment-guidelines",
-    "tasks.md",
-    "pdd.md",
-    ".cargo_vcs_info.json",
-    ".github/workflows/ci.yml",
-    ".gitignore",
+include = [
+    "src/**/*",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
     "CHANGELOG.md",
-    "CONTRIBUTING.md",
-    "SECURITY.md"
+    "examples/**/*"
 ]
 
 [dependencies]
-reqwest = { version = "0.11", features = ["json"], default-features = false }
+reqwest = { version = "0.11", features = ["json", "rustls-tls"], default-features = false }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "time", "net"] }
 tokio-tungstenite = "0.17"
 futures-util = "0.3"
@@ -41,3 +41,4 @@ uuid = { version = "0.8", features = ["v4"] }
 [dev-dependencies]
 tokio-test = "0.4"
 pretty_assertions = "1.0"
+mockito = "0.31"

@@ -18,7 +18,7 @@ A Rust client for the Webull trading API.
 - **Authentication** with support for multi-factor authentication and token refresh
 - **Account management** for retrieving account information, positions, and balances
 - **Market data** for quotes, bars, option chains, and more
-- **Trading operations** for placing, modifying, and canceling orders
+- **Trading operations** for placing, modifying, and canceling orders (including options trading)
 - **Streaming data** via WebSockets for real-time updates
 - **Rate limiting** with configurable strategies to avoid API rate limit violations
 - **Response caching** for improved performance
@@ -89,6 +89,12 @@ The crate includes several examples to help you get started:
 - [Streaming Data](examples/streaming.rs): Demonstrates how to use the WebSocket client for real-time data
 - [Credential Storage](examples/credentials.rs): Shows how to use the secure credential storage
 - [Caching](examples/caching.rs): Demonstrates how to use response caching for improved performance
+- [Paper Trading](examples/paper_trading.rs): Shows how to use paper trading
+- [Account Extended](examples/account_extended.rs): Demonstrates advanced account functionality
+- [Market Data Extended](examples/market_data_extended.rs): Shows advanced market data functionality
+- [Orders Extended](examples/orders_extended.rs): Demonstrates advanced order functionality including options trading
+- [Error Handling](examples/error_handling.rs): Shows comprehensive error handling strategies
+- [Combined Operations](examples/combined_operations.rs): Demonstrates combining multiple API calls for complex operations
 
 To run an example:
 
@@ -189,6 +195,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Documentation
 
 For detailed documentation, see [docs.rs/webull-rs](https://docs.rs/webull-rs).
+
+For a comprehensive getting started guide, see [GETTING_STARTED.md](GETTING_STARTED.md).
 
 ## Contributing
 

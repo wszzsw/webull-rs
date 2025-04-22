@@ -83,7 +83,13 @@ impl<T: Clone + Send + Sync> ResponseCache<T> {
     }
 
     /// Get a cached response.
-    pub fn get(&self, method: &str, url: &str, query: Option<&str>, body: Option<&str>) -> Option<T> {
+    pub fn get(
+        &self,
+        method: &str,
+        url: &str,
+        query: Option<&str>,
+        body: Option<&str>,
+    ) -> Option<T> {
         let key = CacheKey::new(method, url, query, body);
         let mut cache = self.cache.lock().unwrap();
 
@@ -102,7 +108,15 @@ impl<T: Clone + Send + Sync> ResponseCache<T> {
     }
 
     /// Store a response in the cache.
-    pub fn set(&self, method: &str, url: &str, query: Option<&str>, body: Option<&str>, value: T, ttl: Option<Duration>) {
+    pub fn set(
+        &self,
+        method: &str,
+        url: &str,
+        query: Option<&str>,
+        body: Option<&str>,
+        value: T,
+        ttl: Option<Duration>,
+    ) {
         let key = CacheKey::new(method, url, query, body);
         let ttl = ttl.unwrap_or(self.default_ttl);
         let entry = CacheEntry::new(value, ttl);
@@ -112,7 +126,8 @@ impl<T: Clone + Send + Sync> ResponseCache<T> {
         // Check if we need to evict entries
         if cache.len() >= self.max_entries {
             // Remove expired entries first
-            let expired_keys: Vec<_> = cache.iter()
+            let expired_keys: Vec<_> = cache
+                .iter()
                 .filter(|(_, entry)| entry.is_expired())
                 .map(|(key, _)| key.clone())
                 .collect();
@@ -134,7 +149,11 @@ impl<T: Clone + Send + Sync> ResponseCache<T> {
                 let to_remove = entries.len() - self.max_entries + 1;
 
                 // Remove the oldest entries
-                let keys_to_remove: Vec<_> = sorted_entries.iter().take(to_remove).map(|(k, _)| (*k).clone()).collect();
+                let keys_to_remove: Vec<_> = sorted_entries
+                    .iter()
+                    .take(to_remove)
+                    .map(|(k, _)| (*k).clone())
+                    .collect();
                 for key in keys_to_remove {
                     cache.remove(&key);
                 }
@@ -154,7 +173,8 @@ impl<T: Clone + Send + Sync> ResponseCache<T> {
     /// Remove expired entries from the cache.
     pub fn cleanup(&self) {
         let mut cache = self.cache.lock().unwrap();
-        let expired_keys: Vec<_> = cache.iter()
+        let expired_keys: Vec<_> = cache
+            .iter()
             .filter(|(_, entry)| entry.is_expired())
             .map(|(key, _)| key.clone())
             .collect();
@@ -199,7 +219,10 @@ impl CacheManager {
         });
 
         // Store the cache
-        caches.insert(name.to_string(), cache.clone() as Arc<dyn Any + Send + Sync>);
+        caches.insert(
+            name.to_string(),
+            cache.clone() as Arc<dyn Any + Send + Sync>,
+        );
 
         cache
     }
@@ -216,7 +239,9 @@ use std::any::{Any, TypeId};
 /// Extension trait for Arc<dyn Any + Send + Sync>.
 trait ArcAnyExt {
     /// Downcast to a specific type.
-    fn downcast_arc<T: 'static>(self) -> Result<Arc<T>, Self> where Self: Sized;
+    fn downcast_arc<T: 'static>(self) -> Result<Arc<T>, Self>
+    where
+        Self: Sized;
 }
 
 impl ArcAnyExt for Arc<dyn Any + Send + Sync> {
