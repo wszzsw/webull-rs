@@ -31,7 +31,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-webull-rs = "0.1.0"
+webull-rs = "0.1.1"
 tokio = { version = "1", features = ["full"] }
 ```
 
